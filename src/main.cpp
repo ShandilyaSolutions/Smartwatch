@@ -57,7 +57,6 @@ void setup(void) {
   tft.init();
 
   tft.fillScreen(TFT_BLACK);
-  
   // Set "cursor" at top left corner of display (0,0) and select font 4
   tft.setCursor(0, 0, 4);
 
