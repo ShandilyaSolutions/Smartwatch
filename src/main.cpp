@@ -5,7 +5,7 @@
 #include "gauge4.h"
 #include "gauge5.h"
 #include "gauge6.h"
-#include "font.h"
+#include "fonts.h"
 TFT_eSPI tft = TFT_eSPI(); 
 TFT_eSprite img = TFT_eSprite(&tft);
 TFT_eSprite ln = TFT_eSprite(&tft);
