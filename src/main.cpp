@@ -1,130 +1,137 @@
-//   Diagnostic test for the displayed colour order
-//
-// Written by Bodmer 17/2/19 for the TFT_eSPI library:
-// https://github.com/Bodmer/TFT_eSPI
+#include <TFT_eSPI.h> 
+#include "gauge1.h"
+#include "gauge2.h"
+#include "gauge3.h"
+#include "gauge4.h"
+#include "gauge5.h"
+#include "gauge6.h"
+#include "font.h"
+TFT_eSPI tft = TFT_eSPI(); 
+TFT_eSprite img = TFT_eSprite(&tft);
+TFT_eSprite ln = TFT_eSprite(&tft);
 
-/* 
- Different hardware manufacturers use different colour order
- configurations at the hardware level.  This may result in
- incorrect colours being displayed.
+double rad=0.01745;
+int angle;
 
- Incorrectly displayed colours could also be the result of
- using the wrong display driver in the library setup file.
+int sx=120;
+int sy=120;
+int r=76;
 
- Typically displays have a control register (MADCTL) that can
- be used to set the Red Green Blue (RGB) colour order to RGB
- or BRG so that red and blue are swapped on the display.
+float x[360];
+float y[360];
+float x2[360];
+float y2[360];
 
- This control register is also used to manage the display
- rotation and coordinate mirroring. The control register
- typically has 8 bits, for the ILI9341 these are:
+const int pwmFreq = 5000;
+const int pwmResolution = 8;
+const int pwmLedChannelTFT = 0;
 
- Bit Function
- 7   Mirror Y coordinate (row address order)
- 6   Mirror X coordinate (column address order)
- 5   Row/column exchange (for rotation)
- 4   Refresh direction (top to bottom or bottom to top in portrait orientation)
- 3   RGB order (swaps red and blue)
- 2   Refresh direction (top to bottom or bottom to top in landscape orientation)
- 1   Not used
- 0   Not used
+int chosenOne=0;
+int minValue[6]={0,20,0,0,0,80};
+int maxValue[6]={40,100,60,80,70,160};
+int dbounce=0;
 
- The control register bits can be written with this example command sequence:
- 
-    tft.writecommand(TFT_MADCTL);
-    tft.writedata(0x48);          // Bits 6 and 3 set
+void setup() {
+
+    ledcSetup(pwmLedChannelTFT, pwmFreq, pwmResolution);
+    ledcAttachPin(5, pwmLedChannelTFT);
+    ledcWrite(pwmLedChannelTFT, 90);
+
+    pinMode(12,INPUT_PULLUP);
+   
+    tft.init();
+    tft.setRotation(0);
+    tft.setSwapBytes(true);
+    img.setSwapBytes(true);
+    tft.fillScreen(TFT_ORANGE);
+    img.createSprite(240, 240);
     
- 0x48 is the default value for ILI9341 (0xA8 for ESP32 M5STACK)
- in rotation 0 orientation.
- 
- Another control register can be used to "invert" colours,
- this swaps black and white as well as other colours (e.g.
- green to magenta, red to cyan, blue to yellow).
- 
- To invert colours insert this line after tft.init() or tft.begin():
 
-    tft.invertDisplay( invert ); // Where invert is true or false
+  tft.setPivot(60,60);
+  img.setTextDatum(4);
+  img.setTextColor(TFT_BLACK,0xAD55);
+  img.setFreeFont(&Orbitron_Medium_28);
 
-*/
+  int i=0;
+  int a=136;
 
-#include <SPI.h>
+  while(a!=44)
+  {
+   x[i]=r*cos(rad*a)+sx;
+   y[i]=r*sin(rad*a)+sy;
+   x2[i]=(r-20)*cos(rad*a)+sx;
+   y2[i]=(r-20)*sin(rad*a)+sy;
+   i++;
+   a++;
+   if(a==360)
+   a=0;
+  }
 
-#include <TFT_eSPI.h>       // Hardware-specific library
-
-TFT_eSPI tft = TFT_eSPI();  // Invoke custom library
-
-void setup(void) {
-  tft.init();
-
-  tft.fillScreen(TFT_BLACK);
-  // Set "cursor" at top left corner of display (0,0) and select font 4
-  tft.setCursor(0, 0, 4);
-
-  // Set the font colour to be white with a black background
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-
-  // We can now plot text on screen using the "print" class
-  tft.println("Initialised default\n");
-  tft.println("White text");
+delay(2000);
+tft.fillScreen(TFT_BLUE); //fills entire screen with specified color
+delay(2000);
   
-  tft.setTextColor(TFT_RED, TFT_BLACK);
-  tft.println("Red text");
-  
-  tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  tft.println("Green text");
-  
-  tft.setTextColor(TFT_BLUE, TFT_BLACK);
-  tft.println("Blue text");
-
-  delay(5000);
-
 }
+
+//min angle 136 or 137
+//max angle 43
+
+int a1,a2;
+int result=0;
 
 void loop() {
 
-  tft.invertDisplay( false ); // Where i is true or false
+  if(digitalRead(12)==0)
+  {
+    if(dbounce==0)
+       {
+        dbounce=1;
+        chosenOne++;
+        if(chosenOne>=6)
+        chosenOne=0;
+        }
+    }else dbounce=0;
+  result=map(analogRead(14),0,4095,minValue[chosenOne],maxValue[chosenOne]);
+  angle=map(result,minValue[chosenOne],maxValue[chosenOne],0,267);
+  
+
+
+ if(chosenOne==0)
+ img.pushImage(0,0,240,240,gauge1);
+  if(chosenOne==1)
+ img.pushImage(0,0,240,240,gauge2);
+  if(chosenOne==2)
+ img.pushImage(0,0,240,240,gauge3);
+  if(chosenOne==3)
+ img.pushImage(0,0,240,240,gauge4);
+  if(chosenOne==4)
+ img.pushImage(0,0,240,240,gauge5);
+  if(chosenOne==5)
+ img.pushImage(0,0,240,240,gauge6);
+
+ if(chosenOne==5)
+  img.drawFloat(result/10.00,2,120,114);
+ else if(chosenOne==4)
+ img.drawString(String(result*100),120,114);
+ else
+ img.drawString(String(result),120,114);
+ //img.drawString(String(analogRead(22)), 30,10,2);
+
+ a1=angle-4;
+ a2=angle+4;
+
+ if(a1<0)
+ a1=angle-4+359;
+  if(a2>=359)
+ a2=angle+4-359;
+
+ if(result<=minValue[chosenOne]+4)
+ img.fillTriangle(x[angle],y[angle],x2[angle],y2[angle],x2[a2+2],y2[a2+2],TFT_RED);
+ else if(result>=maxValue[chosenOne]-4)
+ img.fillTriangle(x[angle],y[angle],x2[a1-2],y2[a1-2],x2[angle],y2[angle],TFT_RED);
+ else
+ img.fillTriangle(x[angle],y[angle],x2[a1],y2[a1],x2[a2],y2[a2],TFT_RED);
+
  
-  tft.fillScreen(TFT_BLACK);
-  
-  tft.setCursor(0, 0, 4);
-
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.println("Invert OFF\n");
-
-  tft.println("White text");
-  
-  tft.setTextColor(TFT_RED, TFT_BLACK);
-  tft.println("Red text");
-  
-  tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  tft.println("Green text");
-  
-  tft.setTextColor(TFT_BLUE, TFT_BLACK);
-  tft.println("Blue text");
-
-  delay(5000);
-
-
-  // Binary inversion of colours
-  tft.invertDisplay( true ); // Where i is true or false
- 
-  tft.fillScreen(TFT_BLACK);
-  
-  tft.setCursor(0, 0, 4);
-
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.println("Invert ON\n");
-
-  tft.println("White text");
-  
-  tft.setTextColor(TFT_RED, TFT_BLACK);
-  tft.println("Red text");
-  
-  tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  tft.println("Green text");
-  
-  tft.setTextColor(TFT_BLUE, TFT_BLACK);
-  tft.println("Blue text");
-
-  delay(5000);
+ img.pushSprite(0, 0);
 }
