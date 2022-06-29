@@ -11,7 +11,7 @@ TFT_eSprite img = TFT_eSprite(&tft);
 TFT_eSprite ln = TFT_eSprite(&tft);
 
 double rad=0.01745;
-int angle;
+int ang; // angle 
 
 int sx=120;
 int sy=120;
